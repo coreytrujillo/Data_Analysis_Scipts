@@ -31,7 +31,7 @@ def data_filter(data, datestr, tistr, tfstr):
 
 # Create the proper number of windows in a subplot
 def subcount(WinCount):
-	if WinCount < 1 :
+	if WinCount < 1:
 		print('Error! Nothing to Plot????')
 	elif WinCount == 1:
 		spx = 1
@@ -53,20 +53,24 @@ def subcount(WinCount):
 		spy = 3
 	elif WinCount < 17:
 		spx = 4
-		spy = spx
+		spy = 4
+	elif WinCount < 21:
+		spx = 5
+		spy = 4
 	else:
 		print('We need ', WinCount, 'windows')
-		spx = input('How many would you like in the x direction?')
-		spy = input('How many would you like in the y direction?')
-	return(spx, spy)
+		print('This is more windows than the subcount function is built for')
+		print('please write a new scenario for WinCount')
+		exit()
+	
+	return spx, spy
 
 # Plot time series
-def timeplot(data, tistr, tfstr, headtag, numf, filenum, datestrs, leg, ptitle, xlab, ylab):
+def timeplot(data, tistr, tfstr, headtag, datestr, leg, ptitle, xlab, ylab):
 	# data = combined data
 	# headtag = header string. Use 'Eff' to calculate efficiency from irradiance and power
-	# numf = number of filtered datasets
 	# filenum = array of indicies for data files
-	# datestrs = string of dates for each dataset
+	# datestr = string of dates for each dataset
 	# leg = array of strings for legend
 	# ptitle = plot title
 	# xlab = xlabel
@@ -75,9 +79,10 @@ def timeplot(data, tistr, tfstr, headtag, numf, filenum, datestrs, leg, ptitle, 
 	Ave = []
 	STDV = []
 	
+	numf = len(tistr)
 	for i in range(0, numf):
 		# Filter data
-		dataf = data_filter(data[filenum[i]], datestrs[filenum[i]], tistr[i], tfstr[i])
+		dataf = data_filter(data, datestr, tistr[i], tfstr[i])
 		
 		# Get min index of filtered data
 		idxmin = dataf.index.min()
@@ -153,7 +158,8 @@ def linreg(x, y, tx, ty):
 	return(TLx, TLy, C, R2, tx, ty, tstr)
 
 # Plot averaged values with error bars
-def plotaves(xave, yave, xstdv, ystdv, numf, leg, xlab, ylab, ptitle, tx, ty):
+def plotaves(xave, yave, xstdv, ystdv, leg, xlab, ylab, ptitle, tx, ty):
+	numf = len(leg)
 	for i in range(0, numf):
 		plt.errorbar(xave[i], yave[i], xerr=xstdv[i], yerr=ystdv[i], fmt='o')
 	

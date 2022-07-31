@@ -4,12 +4,14 @@ from matplotlib import colors, rcParams, cycler, patches
 from math import pi
 import numpy as np
 from statistics import stdev
+import re
+
 
 # Date Strings
-datestrs = ['220313', '220314', '220315', '220324', '220331']
+datestrs = ['220418', '220418']
 
 # Filter data for each experiment?
-PlotFilter = 1
+PlotFilter = 0
 
 # Figure Output Values
 fs = (20,12)
@@ -19,41 +21,29 @@ figrootname = './KitchenSinkFigs/' + datetime.now().strftime('%y%m%d') + '_KS_'
 # File Location and Names
 fpath = '../../Box_Experiments/'
 
-f220313 = '220313_FiberBenchmark/220313_FiberBenchmark_data.csv'
-f220314 = '220314_FiberBenchmark/220314_FiberBenchmark_data.csv'
-f220315 = '220315_CollectorBenchmark/220315_CollectorBenchmark_data.csv'
-f220324 = '220324_CollectorBenchmark/220324_CollectorBenchmark_data.csv'
-f220331 = '220331_CollectorFiberBenchmark/220331_CollectorFiberBenchmark_data.csv'
+fdry = '220418_TC_Benchmark/220418_TC_Benchmark_data.csv'
+fwet = '220418_TC_WaterBoil/220418_TC_WaterBoil_data.csv'
 
-fnames = [f220313, f220314, f220315, f220324, f220331] # Array of file names
+fnames = [fdry, fwet] # Array of file names
 
 # Labels
-lbl220313 = ['FA Before Cleaning', 'FA After Cleaning','FB', 'FC', 'FD Backwards', 'FE']
-lbl220314 = ['FE Before Cleaning', 'FE After Cleaning', 'FF', 'FG', 'FH', 'FA']
-lbl220315 = ['C1 FB', 'C2 FB', 'C3 FB', 'C4 FB', 'C2 FB: Round II']
-lbl220324 = ['C2 FB', 'C4 FB', 'C3 FC', 'C1 FC']
-lbl220331 = ['C1 FC', 'C2 FA','C3 FF', 'C4 FD']
+lbldry = ['Dry: All Shade', 'Dry: TC Sun LJ Shade', 'Dry: All Sun', 'Dry: TC Sun LJ Covered']
+lblwet = ['Wet: LJ Shade', 'Wet: LJ Sun', 'Wet: LJ Covered']
 
-lbl = lbl220313 + lbl220314 + lbl220315 + lbl220324 + lbl220331 # Array of labels
-lblidx = [lbl220313, lbl220314, lbl220315, lbl220324, lbl220331] # Array for label indices
+lbl = lbldry + lblwet # Array of labels
+lblidx = [lbldry, lblwet] # Array for label indices
 
 # Initial time strings
-tistr220313 = ['12:33:00', '12:40:00', '13:08:00', '13:39:00', '14:21:00', '14:50:00']
-tistr220314 = ['11:18:00', '11:29:00', '11:50:00', '13:52:15', '14:25:00', '14:59:00']
-tistr220315 = ['12:00:00', '13:01:00', '14:06:00', '15:25:15', '16:25:00']
-tistr220324 = ['13:44:00', '14:40:00', '15:32:00', '16:32:00']
-tistr220331 = ['13:42:00', '14:16:00', '14:46:00', '15:15:00']
+tistrdry = ['13:29:00', '13:46:00', '13:59:00', '14:13:00']
+tistrwet = ['15:23:00', '16:01:00', '16:30:00']
 
-tistr = tistr220313 + tistr220314 + tistr220315 + tistr220324 + tistr220331 # Array of inital time srings
+tistr = tistrdry + tistrwet # Array of inital time srings
 
 # Final time strings
-tfstr220313 = ['12:38:00','12:45:00', '13:18:00', '13:52:00', '14:30:00', '14:58:00']
-tfstr220314 = ['11:28:00', '11:35:15', '11:58:00', '14:04:00', '14:36:00', '15:10:00']
-tfstr220315 = ['12:10:00', '13:11:00', '14:17:00', '15:36:00', '16:35:00']
-tfstr220324 = ['13:54:00', '14:50:00', '15:42:00',  '16:44:00']
-tfstr220331 = ['13:52:00','14:26:00', '14:56:00', '15:26:00']
+tfstrdry = ['13:40:00', '13:56:00', '14:07:00', '14:20:00']
+tfstrwet = ['15:57:00', '16:20:00', '16:42:00']
 
-tfstr = tfstr220313 + tfstr220314 + tfstr220315 + tfstr220324 + tfstr220331 # Array of final time srings
+tfstr = tfstrdry + tfstrwet # Array of final time srings
 
 #######################################
 # Don't change anything below this line
@@ -138,6 +128,7 @@ smry = smry.assign(Name=lbl)
 
 # Define global variables
 dc = data[0].columns # Get data headers
+print('Headers:\n', dc)
 figi = 1 # Initiate igure iterator
 Ac = pi*0.6**2/4 # Area of the collector
 numf = len(lbl) # Number of datasets
@@ -210,23 +201,30 @@ if 'PyrE' in dc:
 	if savefig == 1:
 		plt.savefig(figrootname + Pyr_ptitle +'.png')
 
+wild = re.compile('Temp*')
+THead = [Tempstr for Tempstr in dc if re.match(wild, Tempstr)]
+
 # Plot Thermocouple Data
-if 'TC1' in dc:
+if len(THead) > 0:
 	plt.figure(figi, figsize=fs)
 	figi += 1
 	
 	# Data and plot variables
-	TC_headtag = 'TC1'
-	TC_ptitle = 'Ambient Temperature'
+	TC_ptitle = 'Temperatures'
 	TC_xlab = 'Run Time (mins)'
 	TC_ylab = 'Temperature ($^\circ$C)'
 	
-	# Create plot
-	[TAve, Tstdv] = timeplot(data, tistr, tfstr, TC_headtag, numf, filenum, datestrs, leg, TC_ptitle, TC_xlab, TC_ylab)
-	
-	# Output to Summary Table
-	smry = smry.assign(T_Ave_Amb=TAve)
-	smry = smry.assign(T_stdv = Tstdv)
+	TAve = []
+	Tstdv = []
+	for TH in THead:
+		[TA, TS] = timeplot(data, tistr, tfstr, TH, numf, filenum, datestrs, leg, TC_ptitle, TC_xlab, TC_ylab)
+		
+		TAL = TH + '_Ave'
+		TAS = TH + '_STDV'
+		
+		pos = len(smry.columns)
+		smry.insert(loc=pos, column=TAL, value=TA)
+		smry.insert(loc=pos+1, column=TAS, value=TS)
 	
 	# Save figure as png
 	if savefig == 1:
